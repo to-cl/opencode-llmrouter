@@ -1,7 +1,7 @@
 <div align="center">
 
 <div style="display: flex; flex-direction: row; align-items: center; justify-content: center; gap: 3em; margin-bottom: 2em">
-<img src="img/llmrouter-logo.svg" height=70px>
+<img src="img/llmrouter-logo.svg">
 <div>
 X
 </div>
