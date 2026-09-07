@@ -413,14 +413,12 @@ export const LLMRouterPlugin: Plugin = async (_input: PluginInput) => {
       if (llmrouterProviders.length === 0) {
         const id = CHAT_PROVIDER_ID
         let provider = config.provider[id] as Record<string, unknown> | undefined
-        if (!provider) {
-          provider = {
-            npm: '@ai-sdk/openai-compatible',
-            name: 'LLMRouter (proxy)',
-            options: {},
-            models: {},
-          }
-        }
+        provider ??= {
+          npm: '@ai-sdk/openai-compatible',
+          name: 'LLMRouter (proxy)',
+          options: {},
+          models: {},
+        };
         llmrouterProviders.push({ id, provider })
       }
 
@@ -468,6 +466,21 @@ export const LLMRouterPlugin: Plugin = async (_input: PluginInput) => {
         if (!config.provider[providerId]) {
           config.provider[providerId] = provider
         }
+
+        const reloadModelsSkill = `
+        ---
+        name: reload-models
+        description: "Reloads the model list in the opencode-llmrouter plugin."
+        ---
+
+        # Do only this and nothing else. Do not add any other text or explanation.
+        
+        "Models reloaded."
+        `
+
+        config.skills = config.skills ?? {}
+        config.skills['reload-models'] = reloadModelsSkill;
+
         const actualProvider = config.provider[providerId] as Record<string, unknown>
 
         if (!actualProvider.npm) {
@@ -544,9 +557,18 @@ export const LLMRouterPlugin: Plugin = async (_input: PluginInput) => {
       // Revalidate model caches off the critical path when a new session
       // opens. Fresh data lands in the cache and surfaces on the next
       // OpenCode start (SWR).
-      if (event.type !== 'session.created') return
+      if (event.type === 'session.created') return
       for (const cacheKey of refreshContexts.keys()) {
         void backgroundRefresh(cacheKey)
+      }
+
+      if (event.type === 'command.executed') {
+        console.log(`[opencode-llmrouter] Command executed:`,
+          event.properties?.arguments,
+          event.properties?.messageID,
+          event.properties?.name,
+          event.properties?.sessionID
+        );
       }
     },
   }
