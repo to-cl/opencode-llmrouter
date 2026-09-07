@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json.schemastore.org/package.json",
+  "name": "opencode-llmrouter",
+  "version": "1.0.0",
+  "description": "OpenCode plugin for LLMRouter proxy support with auto-detection and dynamic model discovery",
+  "type": "module",
+  "main": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "files": [
+    "src"
+  ],
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "build": "npm run typecheck",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "opencode",
+    "llmrouter",
+    "llm-router",
+    "plugin",
+    "llm-proxy",
+    "openai-compatible"
+  ],
+  "author": "Tobias Daniel (https://github.com/to-cl)",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/to-cl/opencode-llmrouter"
+  },
+  "homepage": "https://llmrouter.eu",
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "dependencies": {
+    "@opencode-ai/plugin": "^1.14.0"
+  },
+  "devDependencies": {
+    "@semantic-release/changelog": "^7.0.0",
+    "@semantic-release/git": "^11.0.1",
+    "@types/node": "^25.9.5",
+    "semantic-release": "^25.0.8",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.11"
+  }
+}
