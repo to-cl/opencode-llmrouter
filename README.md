@@ -1,6 +1,6 @@
 <div align="center">
 
-<div style="display: flex; align-items: center; justify-content: center; gap: 3em; margin-bottom: 2em">
+<div style="display: flex; flex-direction: row; align-items: center; justify-content: center; gap: 3em; margin-bottom: 2em">
 <img src="img/llmrouter-logo.svg" height=70px>
 <div>
 X
