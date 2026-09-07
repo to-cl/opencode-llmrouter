@@ -1,11 +1,11 @@
 <div align="center">
 
 <div style="display: flex; flex-direction: row; align-items: center; justify-content: center; gap: 3em; margin-bottom: 2em">
-<img src="img/llmrouter-logo.svg">
+<img src="img/llmrouter-logo.svg" height=70px>
 <div>
 X
 </div>
-<img src="img/opencode-logo.svg">
+<img src="img/opencode-logo.svg" height=50px>
 </div>
 
 # Opencode Plugin for LLMrouter.eu
