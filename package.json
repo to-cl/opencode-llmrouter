@@ -4,18 +4,7 @@
   "version": "1.0.0",
   "description": "OpenCode plugin for LLMRouter proxy support with auto-detection and dynamic model discovery",
   "type": "module",
-  "main": "./src/index.ts",
-  "exports": {
-    ".": "./src/index.ts"
-  },
-  "files": [
-    "src"
-  ],
-  "scripts": {
-    "typecheck": "tsc --noEmit",
-    "build": "npm run typecheck",
-    "prepublishOnly": "npm run build"
-  },
+  "main": ".opencode/plugins/opencode-llmrouter.ts",
   "keywords": [
     "opencode",
     "llmrouter",
