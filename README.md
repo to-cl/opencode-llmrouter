@@ -1,13 +1,24 @@
+<div align="center">
+
+<div style="display: flex; align-items: center; justify-content: center; gap: 3em; margin-bottom: 2em">
+<img src="llmrouter-logo.svg" height=70px>
+X
+<img src="opencode-logo.svg">
+</div>
+
 # Opencode Plugin for LLMrouter.eu
 Load the model list automatically including cost, token limits, and modalities.
 
-## Setup 
+</div>
 
+
+## Setup
+in your `opencode.json` add the following:
 ```
 {
   "$schema": "https://opencode.ai/config.json",
   "plugin": [
-    "tbd.: git-url"
+    "opencode-llmrouter@git+https://github.com/to-cl/opencode-llmrouter.git"
   ],
   "provider": {
     "llmrouter": {
@@ -21,5 +32,4 @@ Load the model list automatically including cost, token limits, and modalities.
     }
   }
 }
-
 ```
