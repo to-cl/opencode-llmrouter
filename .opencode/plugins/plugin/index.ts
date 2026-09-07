@@ -526,16 +526,6 @@ export const LLMRouterPlugin: Plugin = async (_input: PluginInput) => {
           const added = mergeModels(models, built)
           injectedModelIds.set(cacheKey, new Set(added))
           writeModelCache(cacheKey, built)
-        } else {
-          const cached = readModelCache(cacheKey)
-
-          if (cached && Object.keys(cached).length > 0) {
-            const added = mergeModels(models, cached)
-            injectedModelIds.set(cacheKey, new Set(added))
-            console.log(
-              `[opencode-llmrouter] Loaded ${Object.keys(cached).length} models from cache for provider "${providerId}" (${baseURL}); refresh happens in the background on new sessions.`,
-            )
-          }
         }
       }
     },
@@ -546,11 +536,6 @@ export const LLMRouterPlugin: Plugin = async (_input: PluginInput) => {
       if (event.type === 'session.created') return
       for (const cacheKey of refreshContexts.keys()) {
         void backgroundRefresh(cacheKey)
-      }
-      if (event.type === 'command.executed' && event.properties?.name === 'refresh-model-list') {
-        for (const cacheKey of refreshContexts.keys()) {
-          void backgroundRefresh(cacheKey)
-        }
       }
     },
   }
