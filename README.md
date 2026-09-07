@@ -15,7 +15,25 @@ Load the model list automatically including cost, token limits, and modalities.
 
 
 ## Setup
-in your `opencode.json` add the following:
+
+1. Open opencode and type `/connect`
+
+<img src="img/connect.png">
+
+2. Search for `other` and click on `Other Custom Provider`
+
+<img src="img/other-provider.png">
+
+3. Type `llmrouter` or `llmrouter-{something}` or `llmrouter_{something}` and press enter
+
+<img src="img/provider-name.png">
+
+4. Paste your LLMrouter.eu API-key and press enter
+
+<img src="img/api-key.png">
+
+5. For a global setup of opencode go to `"C:\Users\{UserName}\.config\opencode\opencode.jsonc"` and add the following
+
 ```
 {
   "$schema": "https://opencode.ai/config.json",

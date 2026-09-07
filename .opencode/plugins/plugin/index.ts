@@ -127,7 +127,7 @@ function enrichModel(model: LLMRouterModel, info: LLMRouterModelInfo): LLMRouter
  * single token. `1e6` bridges the two — verified against a live
  * `x-llmrouter-response-cost` header, not just the unit names.
  */
-const USD_PER_TOKEN_TO_PER_MILLION = 1_000_000
+const PRICE_PER_TOKEN_TO_PER_MILLION = 1_000_000
 
 /**
  * Convert a discovered LLMRouter model into an OpenCode config-level
@@ -171,14 +171,14 @@ function toConfigModel(
   // for something LLMRouter simply has no price anchor for (e.g. rerank).
   if (model.input_cost_per_token != null || model.output_cost_per_token != null) {
     const cost: Record<string, number> = {
-      input: (model.input_cost_per_token ?? 0) * USD_PER_TOKEN_TO_PER_MILLION,
-      output: (model.output_cost_per_token ?? 0) * USD_PER_TOKEN_TO_PER_MILLION,
+      input: (model.input_cost_per_token ?? 0) * PRICE_PER_TOKEN_TO_PER_MILLION,
+      output: (model.output_cost_per_token ?? 0) * PRICE_PER_TOKEN_TO_PER_MILLION,
     }
     if (model.cache_read_input_token_cost != null) {
-      cost.cache_read = model.cache_read_input_token_cost * USD_PER_TOKEN_TO_PER_MILLION
+      cost.cache_read = model.cache_read_input_token_cost * PRICE_PER_TOKEN_TO_PER_MILLION
     }
     if (model.cache_creation_input_token_cost != null) {
-      cost.cache_write = model.cache_creation_input_token_cost * USD_PER_TOKEN_TO_PER_MILLION
+      cost.cache_write = model.cache_creation_input_token_cost * PRICE_PER_TOKEN_TO_PER_MILLION
     }
     entry.cost = cost
   }
@@ -518,25 +518,6 @@ export const LLMRouterPlugin: Plugin = async (_input: PluginInput) => {
           continue
         }
 
-        // SWR fast path: serve cached entries synchronously so startup
-        // isn't blocked on the network. A background refresh (see the
-        // `event` hook) keeps the cache fresh for the next launch.
-        // The cache is scoped per provider so two providers pointing at
-        // the same proxy (with different keys) don't share model lists.
-        const cached = readModelCache(cacheKey)
-
-        if (cached && Object.keys(cached).length > 0) {
-          const added = mergeModels(models, cached)
-          injectedModelIds.set(cacheKey, new Set(added))
-          console.log(
-            `[opencode-llmrouter] Loaded ${Object.keys(cached).length} models from cache for provider "${providerId}" (${baseURL}); refresh happens in the background on new sessions.`,
-          )
-          continue
-        }
-
-        // Cold cache: do a live fetch (slow first run only), inject, and
-        // persist for subsequent startups. Capped by a timeout so a slow
-        // proxy never blocks boot.
         const built = await withTimeout(
           discoverModels(baseURL, modelUrl, apiKey, customHeaders, providerId),
           DISCOVERY_TIMEOUT_MS,
@@ -546,6 +527,16 @@ export const LLMRouterPlugin: Plugin = async (_input: PluginInput) => {
           const added = mergeModels(models, built)
           injectedModelIds.set(cacheKey, new Set(added))
           writeModelCache(cacheKey, built)
+        } else {
+          const cached = readModelCache(cacheKey)
+
+          if (cached && Object.keys(cached).length > 0) {
+            const added = mergeModels(models, cached)
+            injectedModelIds.set(cacheKey, new Set(added))
+            console.log(
+              `[opencode-llmrouter] Loaded ${Object.keys(cached).length} models from cache for provider "${providerId}" (${baseURL}); refresh happens in the background on new sessions.`,
+            )
+          }
         }
       }
     },
