@@ -467,20 +467,6 @@ export const LLMRouterPlugin: Plugin = async (_input: PluginInput) => {
           config.provider[providerId] = provider
         }
 
-        const reloadModelsSkill = `
-        ---
-        name: reload-models
-        description: "Reloads the model list in the opencode-llmrouter plugin."
-        ---
-
-        # Do only this and nothing else. Do not add any other text or explanation.
-        
-        "Models reloaded."
-        `
-
-        config.skills = config.skills ?? {}
-        config.skills['reload-models'] = reloadModelsSkill;
-
         const actualProvider = config.provider[providerId] as Record<string, unknown>
 
         if (!actualProvider.npm) {
@@ -561,14 +547,10 @@ export const LLMRouterPlugin: Plugin = async (_input: PluginInput) => {
       for (const cacheKey of refreshContexts.keys()) {
         void backgroundRefresh(cacheKey)
       }
-
-      if (event.type === 'command.executed') {
-        console.log(`[opencode-llmrouter] Command executed:`,
-          event.properties?.arguments,
-          event.properties?.messageID,
-          event.properties?.name,
-          event.properties?.sessionID
-        );
+      if (event.type === 'command.executed' && event.properties?.name === 'refresh-model-list') {
+        for (const cacheKey of refreshContexts.keys()) {
+          void backgroundRefresh(cacheKey)
+        }
       }
     },
   }
