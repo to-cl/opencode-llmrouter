@@ -50,6 +50,36 @@ const refreshContexts = new Map<string, RefreshContext>()
 const refreshInFlight = new Set<string>()
 
 /**
+ * OpenCode SDK client captured from the plugin input, used to surface
+ * plugin messages as TUI toasts via `client.tui.showToast`.
+ */
+let pluginClient: PluginInput['client'] | undefined
+
+/**
+ * Surface a plugin message as a TUI toast, falling back to the matching
+ * console method when no client is available (yet) or toast delivery
+ * fails (e.g. headless server with no TUI attached). Fire-and-forget:
+ * never awaited by callers and never rejects.
+ */
+function notify(variant: 'info' | 'warning' | 'error', message: string): void {
+  const fallback = () => {
+    if (variant === 'error') console.error(message)
+    else if (variant === 'warning') console.warn(message)
+    else console.log(message)
+  }
+  if (!pluginClient) {
+    fallback()
+    return
+  }
+  pluginClient
+    .tui.showToast({ body: { title: 'opencode-llmrouter', message, variant } })
+    .then((result) => {
+      if (result.error) fallback()
+    })
+    .catch(() => fallback())
+}
+
+/**
  * Race a promise against a timeout, resolving to `null` if the timeout
  * wins. Clears the timer either way so a resolved discovery can't keep
  * a short-lived process alive waiting on a pending `setTimeout`.
@@ -216,8 +246,9 @@ async function discoverModels(
   providerId: string,
 ): Promise<Record<string, unknown> | null> {
   if (!(await checkLLMRouterHealth(baseURL, apiKey, customHeaders))) {
-    console.warn(
-      `[opencode-llmrouter] LLMRouter appears offline or unauthorized for provider "${providerId}" at ${baseURL}`,
+    notify(
+      'warning',
+      `LLMRouter appears offline or unauthorized for provider "${providerId}" at ${baseURL}`,
     )
     return null
   }
@@ -233,9 +264,9 @@ async function discoverModels(
 
   if (modelsResult.status === 'rejected') {
     const error = modelsResult.reason
-    console.warn(
-      `[opencode-llmrouter] Model discovery failed for provider "${providerId}":`,
-      error instanceof Error ? error.message : String(error),
+    notify(
+      'warning',
+      `Model discovery failed for provider "${providerId}": ${error instanceof Error ? error.message : String(error)}`,
     )
     return null
   }
@@ -246,16 +277,14 @@ async function discoverModels(
     infoByName = infoResult.value
   } else {
     const reason = infoResult.reason
-    console.warn(
-      `[opencode-llmrouter] /v1/model/info unavailable for provider "${providerId}"; non-chat model filtering will use id heuristics only:`,
-      reason instanceof Error ? reason.message : String(reason),
+    notify(
+      'warning',
+      `/v1/model/info unavailable for provider "${providerId}"; non-chat model filtering will use id heuristics only: ${reason instanceof Error ? reason.message : String(reason)}`,
     )
   }
 
   if (discovered.length === 0) {
-    console.warn(
-      `[opencode-llmrouter] LLMRouter responded for provider "${providerId}" but exposed zero models.`,
-    )
+    notify('warning', `LLMRouter responded for provider "${providerId}" but exposed zero models.`)
     return null
   }
 
@@ -281,7 +310,10 @@ async function discoverModels(
       entry = toConfigModel(info ? enrichModel(model, info) : model, info)
     }
     catch (e) {
-      console.error('[opencode-llmrouter]', 12.2, model.id, e)
+      notify(
+        'error',
+        `Failed to build model entry for ${model.id}: ${e instanceof Error ? e.message : String(e)}`,
+      )
     }
 
     if (!entry) {
@@ -292,20 +324,22 @@ async function discoverModels(
   }
 
   if (unmatched.length > 0) {
-    console.warn(
-      `[opencode-llmrouter] /v1/model/info has no entry for ${unmatched.length} model(s) on provider "${providerId}"; ` +
+    notify(
+      'warning',
+      `/v1/model/info has no entry for ${unmatched.length} model(s) on provider "${providerId}"; ` +
       `classification uses id heuristics for: ${unmatched.slice(0, 5).join(', ')}` +
       (unmatched.length > 5 ? `, +${unmatched.length - 5} more` : ''),
     )
   }
 
-  // console.log(
-  //   `[opencode-llmrouter] Discovered ${discovered.length} models for provider "${providerId}" from ${baseURL} ` +
-  //   `(${Object.keys(built).length} built` +
-  //   (skipped > 0 ? `, ${skipped} non-chat hidden` : '') +
-  //   (wildcards > 0 ? `, ${wildcards} wildcard ignored` : '') +
-  //   ')',
-  // )
+  notify(
+    'info',
+    `Discovered ${discovered.length} models for provider "${providerId}" from ${baseURL} ` +
+    `(${Object.keys(built).length} built` +
+    (skipped > 0 ? `, ${skipped} non-chat hidden` : '') +
+    (wildcards > 0 ? `, ${wildcards} wildcard ignored` : '') +
+    ')',
+  )
 
   return built
 }
@@ -356,9 +390,7 @@ async function backgroundRefresh(cacheKey: string): Promise<void> {
     )
     if (built && Object.keys(built).length > 0) {
       writeModelCache(cacheKey, built)
-      // console.log(
-      //   `[opencode-llmrouter] Background-refreshed model cache for ${ctx.baseURL} (${Object.keys(built).length} models)`,
-      // )
+      notify('info', `Background-refreshed model cache for ${ctx.baseURL} (${Object.keys(built).length} models)`)
     }
   } catch {
     // Best-effort — a failed refresh just leaves the stale cache in place.
@@ -391,7 +423,8 @@ async function backgroundRefresh(cacheKey: string): Promise<void> {
  *   }
  * }
  */
-export const LLMRouterPlugin: Plugin = async (_input: PluginInput) => {
+export const LLMRouterPlugin: Plugin = async (input: PluginInput) => {
+  pluginClient = input.client
   return {
     config: async (config: any) => {
       // Ensure the provider entry exists
@@ -456,8 +489,9 @@ export const LLMRouterPlugin: Plugin = async (_input: PluginInput) => {
         }
 
         if (!baseURL) {
-          console.warn(
-            `[opencode-llmrouter] No LLMRouter proxy found for provider "${providerId}". Configure options.baseURL or start LLMRouter on port 4000/8000/8080.`,
+          notify(
+            'warning',
+            `No LLMRouter proxy found for provider "${providerId}". Configure options.baseURL or start LLMRouter on port 4000/8000/8080.`,
           )
           continue
         }
