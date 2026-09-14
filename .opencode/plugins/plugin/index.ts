@@ -179,12 +179,20 @@ function toConfigModel(
   }
   // Some deployments only report the OpenAI-style `max_tokens` total;
   // use it as the context limit when `max_input_tokens` is absent.
+  // Only emit `limit` fields we actually know: inventing a `0` (or
+  // passing a `null` through) asserts a bogus limit and OpenCode's
+  // config validator rejects `null` outright — omit the field instead.
   const contextLimit = model.max_input_tokens ?? model.max_tokens
-  if (contextLimit || model.max_output_tokens) {
-    entry.limit = {
-      context: contextLimit ?? 0,
-      output: model.max_output_tokens ?? 0,
-    }
+  const outputLimit = model.max_output_tokens
+  const hasContext =
+    typeof contextLimit === 'number' && Number.isFinite(contextLimit) && contextLimit > 0
+  const hasOutput =
+    typeof outputLimit === 'number' && Number.isFinite(outputLimit) && outputLimit > 0
+  if (hasContext || hasOutput) {
+    const limit: Record<string, number> = {}
+    if (hasContext) limit.context = contextLimit
+    if (hasOutput) limit.output = outputLimit
+    entry.limit = limit
   }
   if (model.supports_function_calling) {
     entry.tool_call = true
