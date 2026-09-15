@@ -311,6 +311,12 @@ async function discoverModels(
       wildcards++
       continue
     }
+
+    if(model.id.includes('reranker') || model.id.includes('embedding')) {
+      skipped++
+      continue
+    }
+
     const info = infoByName?.get(model.id)
     if (infoByName && !info) unmatched.push(model.id)
 

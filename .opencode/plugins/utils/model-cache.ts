@@ -8,7 +8,7 @@ import { join } from 'node:path'
  * from older plugin versions are ignored rather than deserialized into
  * an incompatible structure.
  */
-const CACHE_VERSION = 2
+const CACHE_VERSION = 3
 
 /**
  * Maximum age of a cache entry before it's treated as a miss. Without a
