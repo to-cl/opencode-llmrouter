@@ -192,7 +192,7 @@ function toConfigModel(
     limit.output = info.maxOutputTokens
   }
 
-  if (limit.context || limit.input || limit.output) {
+  if (limit.context || (limit.input && limit.output)) {
     entry.limit = limit
   }
 
