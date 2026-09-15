@@ -180,16 +180,12 @@ function toConfigModel(
 
   const limit: Record<string, number> = {}
 
-  if (info?.context) {
+  if (info?.context && info?.context > 0
+    && info?.maxInputTokens && info?.maxInputTokens > 0
+    && info?.maxOutputTokens && info?.maxOutputTokens > 0) {
     limit.context = info.context
-  }
-
-  if (info?.maxInputTokens && info?.maxOutputTokens) {
     limit.input = info.maxInputTokens
     limit.output = info.maxOutputTokens
-  }
-
-  if (limit.context || (limit.input && limit.output)) {
     entry.limit = limit
   }
 
@@ -309,7 +305,7 @@ async function discoverModels(
       continue
     }
 
-    if(model.id.includes('reranker') || model.id.includes('embedding')) {
+    if (model.id.includes('reranker') || model.id.includes('embedding')) {
       skipped++
       continue
     }
