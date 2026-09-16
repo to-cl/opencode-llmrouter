@@ -576,7 +576,7 @@ export const LLMRouterPlugin: Plugin = async (input: PluginInput) => {
       // Revalidate model caches off the critical path when a new session
       // opens. Fresh data lands in the cache and surfaces on the next
       // OpenCode start (SWR).
-      if (event.type === 'session.created') return
+      if (event.type !== 'session.created') return
       for (const cacheKey of refreshContexts.keys()) {
         void backgroundRefresh(cacheKey)
       }
