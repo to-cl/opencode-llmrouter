@@ -39,13 +39,19 @@ Load the model list automatically including cost, token limits, and modalities.
   "$schema": "https://opencode.ai/config.json",
   "plugins": [
     {
-      "package": "opencode-llmrouter@git+https://github.com/to-cl/opencode-llmrouter.git",
+      "package": "llmrouter@git+https://github.com/to-cl/opencode-llmrouter.git",
       "options": {
         "baseURL": "https://proxy.llmrouter.eu",
         "modelUrl": "https://backend.llmrouter.eu/public/models"
       }
     }
-  ]
+  ],
+  "provider": {
+    "llmrouter": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "LLMrouter",
+    }
+  },
 }
 ```
 
