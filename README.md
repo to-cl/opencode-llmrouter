@@ -37,19 +37,26 @@ Load the model list automatically including cost, token limits, and modalities.
 ```
 {
   "$schema": "https://opencode.ai/config.json",
-  "plugin": [
-    "opencode-llmrouter@git+https://github.com/to-cl/opencode-llmrouter.git"
-  ],
-  "provider": {
-    "llmrouter": {
-      "npm": "@ai-sdk/openai-compatible",
-      "name": "LLMrouter",
+  "plugins": [
+    {
+      "package": "opencode-llmrouter@git+https://github.com/to-cl/opencode-llmrouter.git",
       "options": {
-        "baseURL": "https://proxy.llmrouter.eu/v1",
-        "modelUrl": "https://backend.llmrouter.eu/public/models",
-        "includeUsage": true
+        "baseURL": "https://proxy.llmrouter.eu",
+        "modelUrl": "https://backend.llmrouter.eu/public/models"
       }
     }
-  }
+  ]
 }
 ```
+
+The API key is not part of `opencode.jsonc`. The plugin reads it from the credential stored by `/connect`, or from the `LLMROUTER_API_KEY` environment variable.
+
+Plugin options:
+
+| Option | Description |
+| --- | --- |
+| `baseURL` | LLMRouter proxy URL. Omit to auto-detect on `localhost:4000`, `8000`, or `8080`. |
+| `modelUrl` | Model metadata endpoint. Defaults to `{baseURL}/v1/model/info`. |
+| `customHeaders` | Extra HTTP headers sent with every request. |
+
+Upgrading from v1: the `plugin` key is now `plugins`, the `provider.llmrouter` block is no longer needed, and `apiKey` must not be placed in `opencode.jsonc`. Requires OpenCode v2.

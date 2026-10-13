@@ -8,7 +8,7 @@ import { join } from 'node:path'
  * from older plugin versions are ignored rather than deserialized into
  * an incompatible structure.
  */
-const CACHE_VERSION = 3
+const CACHE_VERSION = 4
 
 /**
  * Maximum age of a cache entry before it's treated as a miss. Without a
@@ -22,7 +22,7 @@ const CACHE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000 // 7 days
 interface ModelCacheFile {
   version: number
   savedAt: number
-  models: Record<string, unknown>
+  models: unknown
 }
 
 /**
@@ -53,21 +53,19 @@ function cacheFile(cacheKey: string): string {
  * older than `CACHE_MAX_AGE_MS`) — the caller treats that as a cache
  * miss and falls back to a live fetch.
  */
-export function readModelCache(
-  cacheKey: string,
-): Record<string, unknown> | null {
+export function readModelCache<T>(cacheKey: string): T[] | null {
   try {
     const raw = readFileSync(cacheFile(cacheKey), 'utf8')
     const parsed = JSON.parse(raw) as ModelCacheFile
     if (parsed.version !== CACHE_VERSION) return null
-    if (!parsed.models || typeof parsed.models !== 'object') return null
+    if (!Array.isArray(parsed.models)) return null
     if (
       typeof parsed.savedAt !== 'number' ||
       Date.now() - parsed.savedAt > CACHE_MAX_AGE_MS
     ) {
       return null
     }
-    return parsed.models
+    return parsed.models as T[]
   } catch {
     return null
   }
@@ -94,10 +92,7 @@ export function readModelCacheSavedAt(cacheKey: string): number | null {
  * Persist model entries for a cache key. Best-effort: never throws, so
  * a read-only or full filesystem can't break discovery.
  */
-export function writeModelCache(
-  cacheKey: string,
-  models: Record<string, unknown>,
-): void {
+export function writeModelCache<T>(cacheKey: string, models: T[]): void {
   try {
     mkdirSync(cacheDir(), { recursive: true })
     const payload: ModelCacheFile = {
